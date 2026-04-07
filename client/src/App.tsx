@@ -1,107 +1,69 @@
 import React, { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { GameState, Player, Tile as TileType } from './types';
+import type { Player, Tile as TileType } from './types';
 import Lobby from './components/Lobby';
 import Board from './components/Board';
 import Scoreboard from './components/Scoreboard';
-import LiveChart from './components/LlveChart';
-const INITIAL_MOCK_PLAYERS: Player[] = [
-  { id: 'me', name: 'You', score: 12, isConnected: true },
-  { id: 'p2', name: 'Sarah', score: 18, isConnected: true },
-  { id: 'p3', name: 'Mike', score: 8, isConnected: true },
-  { id: 'p4', name: 'D-Bot', score: 4, isConnected: false },
+import LiveChart from  './components/LlveChart';
+
+const MAHJONG_SYMBOLS = [
+  '🀄',
+  '🀅',
+  '🀆',
+  '🀀',
+  '🀁',
+  '🀂',
+  '🀃',
+  '🀐',
+  '🀙',
+  '🀇',
+  '🀕',
+  '🀞',
+  '🀌',
+  '🀗',
+  '🀠',
 ];
 
-const SYMBOLS = [
-  '🍎',
-  '🍌',
-  '🍇',
-  '🍉',
-  '🍓',
-  '🍒',
-  '🍍',
-  '🥝',
-  '🥭',
-  '🥥',
-  '🥑',
-  '🥦',
-  '🥕',
-  '🌽',
-  '🍄',
+const INITIAL_MOCK_PLAYERS: Player[] = [
+  { id: 'me', name: 'You', score: 120, isConnected: true },
+  { id: 'p2', name: 'Sarah', score: 180, isConnected: true },
+  { id: 'p3', name: 'Mike', score: 80, isConnected: true },
 ];
 
 const MOCK_TILES: TileType[] = Array.from({ length: 30 }, (_, i) => ({
   id: `tile-${i}`,
-  symbol: SYMBOLS[i % 15],
+  symbol: MAHJONG_SYMBOLS[i % 15],
   isFlipped: i === 7 || i === 12,
   isMatched: i < 4,
   lockedBy: i === 15 ? 'p2' : null,
 }));
 
-const MOCK_HISTORY = [
-  { timestamp: Date.now() - 120000, scores: { me: 0, p2: 0, p3: 0, p4: 0 } },
-  { timestamp: Date.now() - 90000, scores: { me: 4, p2: 6, p3: 2, p4: 0 } },
-  { timestamp: Date.now() - 60000, scores: { me: 8, p2: 12, p3: 4, p4: 2 } },
-  { timestamp: Date.now() - 30000, scores: { me: 12, p2: 18, p3: 8, p4: 4 } },
-];
-
-const GAME_START_TIME = Date.now();
-
 const App: React.FC = () => {
   const [userName, setUserName] = useState<string | null>(null);
 
-  const [gameState] = useState<GameState>({
-    tiles: MOCK_TILES,
-    players: INITIAL_MOCK_PLAYERS,
-    scoreHistory: MOCK_HISTORY,
-    isGameOver: false,
-    startTime: GAME_START_TIME,
-  });
-
-  const handleJoin = (name: string) => {
-    setUserName(name);
-  };
-
-  const handleSelectTile = (tileId: string) => {
-    console.log(`Player ${userName} selected tile: ${tileId}`);
-  };
-
   if (!userName) {
-    return <Lobby onJoin={handleJoin} />;
+    return <Lobby onJoin={setUserName} />;
   }
 
   return (
     <div style={styles.appContainer}>
       <header style={styles.header}>
-        <div style={styles.headerContent}>
-          <h1 style={styles.logo}>Mahjong Memory</h1>
-
-          <div style={styles.gameMeta}>
-            <span style={styles.badge}>Session: #8821</span>
-            <span style={styles.badge}>Status: In Progress</span>
-          </div>
-        </div>
+        <h1 style={styles.logo}>🀄 MAHJONG COLLAB</h1>
+        <div style={styles.badge}>ROOM: ORIENTAL_DRAGON_88</div>
       </header>
 
       <main style={styles.mainLayout}>
         <section style={styles.boardSection}>
           <Board
-            tiles={gameState.tiles}
+            tiles={MOCK_TILES}
             currentPlayerId="me"
-            onSelectTile={handleSelectTile}
+            onSelectTile={(id) => console.log(id)}
           />
         </section>
 
         <aside style={styles.sidebar}>
-          <Scoreboard
-            players={gameState.players}
-            currentPlayerId="me"
-          />
-
-          <LiveChart
-            players={gameState.players}
-            scoreHistory={gameState.scoreHistory}
-          />
+          <Scoreboard players={INITIAL_MOCK_PLAYERS} currentPlayerId="me" />
+          <LiveChart players={INITIAL_MOCK_PLAYERS} scoreHistory={[]} />
         </aside>
       </main>
     </div>
@@ -111,64 +73,51 @@ const App: React.FC = () => {
 const styles: Record<string, CSSProperties> = {
   appContainer: {
     minHeight: '100vh',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#062c1e',
+    backgroundImage: 'radial-gradient(circle, #0a3d2b 0%, #062c1e 100%)',
     color: '#f8fafc',
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     display: 'flex',
     flexDirection: 'column',
   },
   header: {
-    backgroundColor: '#1e293b',
-    borderBottom: '1px solid #334155',
-    padding: '1rem 2rem',
-  },
-  headerContent: {
-    maxWidth: '1400px',
-    margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: '1rem 2rem',
+    background: 'rgba(0,0,0,0.3)',
+    borderBottom: '2px solid #b4975a',
   },
   logo: {
-    fontSize: '1.5rem',
-    fontWeight: 800,
+    fontSize: '1.4rem',
+    letterSpacing: '2px',
+    color: '#b4975a',
     margin: 0,
-    background: 'linear-gradient(to right, #3b82f6, #10b981)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  gameMeta: {
-    display: 'flex',
-    gap: '1rem',
   },
   badge: {
-    backgroundColor: '#334155',
+    color: '#b4975a',
+    fontSize: '0.8rem',
+    border: '1px solid #b4975a',
     padding: '4px 12px',
-    borderRadius: '999px',
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    color: '#94a3b8',
+    borderRadius: '4px',
   },
   mainLayout: {
     display: 'grid',
-    gridTemplateColumns: '1fr 380px',
-    gap: '2rem',
-    padding: '2rem',
+    gridTemplateColumns: '1fr 350px',
+    gap: '20px',
+    padding: '20px',
     maxWidth: '1400px',
     margin: '0 auto',
     width: '100%',
     boxSizing: 'border-box',
-    flex: 1,
   },
   boardSection: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    flex: 1,
   },
   sidebar: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.5rem',
+    gap: '20px',
   },
 };
 

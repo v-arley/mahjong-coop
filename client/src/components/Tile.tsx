@@ -10,29 +10,28 @@ interface TileProps {
 
 const Tile: React.FC<TileProps> = ({ tile, currentPlayerId, onTileClick }) => {
   const isLockedByOther = tile.lockedBy !== null && tile.lockedBy !== currentPlayerId;
-  const isLockedByMe = tile.lockedBy === currentPlayerId;
-  const isRevealed = tile.isFlipped || tile.isMatched || tile.lockedBy !== null;
+  const isRevealed = tile.isFlipped || tile.isMatched || Boolean(tile.lockedBy);
 
-  const pulseKeyframes = `
-    @keyframes pulse-border {
-      0% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
-      100% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0); }
-    }
-  `;
+  const getSymbolColor = (symbol: string) => {
+    if (['🀄', '🀇', '🀐', '🀙'].includes(symbol)) return '#d01010';
+    if (['🀅', '🀑', '🀚', '🀈'].includes(symbol)) return '#0f7d12';
+    return '#1049d0';
+  };
 
   const handleClick = () => {
-    if (tile.isMatched) return;
-    if (isLockedByOther) return;
-    if (tile.isFlipped && !isLockedByMe) return;
-
-    onTileClick(tile.id);
+    if (!tile.isMatched && !isLockedByOther) {
+      onTileClick(tile.id);
+    }
   };
 
   return (
-    <div style={styles.container} onClick={handleClick}>
-      <style>{pulseKeyframes}</style>
-
+    <div
+      style={{
+        ...styles.container,
+        cursor: tile.isMatched || isLockedByOther ? 'default' : 'pointer',
+      }}
+      onClick={handleClick}
+    >
       <div
         style={{
           ...styles.tileInner,
@@ -40,7 +39,7 @@ const Tile: React.FC<TileProps> = ({ tile, currentPlayerId, onTileClick }) => {
         }}
       >
         <div style={styles.tileBack}>
-          <span style={styles.backPattern}>?</span>
+          <div style={styles.jadeTexture} />
         </div>
 
         <div
@@ -48,11 +47,12 @@ const Tile: React.FC<TileProps> = ({ tile, currentPlayerId, onTileClick }) => {
             ...styles.tileFront,
             ...(tile.isMatched ? styles.matchedState : {}),
             ...(isLockedByOther ? styles.lockedState : {}),
-            ...(isLockedByMe ? styles.myTurnState : {}),
           }}
         >
-          <span style={styles.symbol}>{tile.symbol}</span>
-          {isLockedByOther && <div style={styles.lockBadge}>🔒</div>}
+          <span style={{ ...styles.symbol, color: getSymbolColor(tile.symbol) }}>
+            {tile.symbol}
+          </span>
+          {isLockedByOther && <div style={styles.lockIcon}>🔒</div>}
         </div>
       </div>
     </div>
@@ -61,16 +61,15 @@ const Tile: React.FC<TileProps> = ({ tile, currentPlayerId, onTileClick }) => {
 
 const styles: Record<string, CSSProperties> = {
   container: {
-    aspectRatio: '1 / 1',
+    aspectRatio: '3 / 4',
     perspective: '1000px',
-    cursor: 'pointer',
     width: '100%',
   },
   tileInner: {
     position: 'relative',
     width: '100%',
     height: '100%',
-    transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
     transformStyle: 'preserve-3d',
   },
   tileBack: {
@@ -78,64 +77,54 @@ const styles: Record<string, CSSProperties> = {
     width: '100%',
     height: '100%',
     backfaceVisibility: 'hidden',
-    backgroundColor: '#334155',
-    border: '2px solid #475569',
-    borderRadius: '12px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    boxSizing: 'border-box',
+    backgroundColor: '#065f46',
+    border: '3px solid #047857',
+    borderRadius: '6px',
+    boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3), 4px 4px 0px #022c22',
+  },
+  jadeTexture: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
+    backgroundImage:
+      'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)',
+    backgroundSize: '10px 10px',
   },
   tileFront: {
     position: 'absolute',
     width: '100%',
     height: '100%',
     backfaceVisibility: 'hidden',
-    backgroundColor: '#ffffff',
-    border: '2px solid #e2e8f0',
-    borderRadius: '12px',
+    transform: 'rotateY(180deg)',
+    backgroundColor: '#fefae0',
+    backgroundImage: 'linear-gradient(135deg, #ffffff 0%, #fefae0 100%)',
+    border: '1px solid #d4d4d8',
+    borderRadius: '6px',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    transform: 'rotateY(180deg)',
-    boxSizing: 'border-box',
-    fontSize: '2rem',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    boxShadow: '-4px 4px 0px #d4d4d8, inset 0 0 10px rgba(0,0,0,0.05)',
   },
   symbol: {
-    userSelect: 'none',
-  },
-  backPattern: {
-    fontSize: '1.5rem',
-    color: '#94a3b8',
+    fontSize: '3.5rem',
     fontWeight: 'bold',
+    userSelect: 'none',
+    filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.2))',
   },
   matchedState: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
-    color: '#166534',
+    backgroundColor: '#ecfdf5',
+    boxShadow: '-4px 4px 0px #10b981',
+    border: '2px solid #10b981',
   },
   lockedState: {
-    borderColor: '#f59e0b',
-    animation: 'pulse-border 2s infinite',
-    opacity: 0.8,
+    boxShadow: '-4px 4px 0px #f59e0b',
+    border: '2px solid #f59e0b',
   },
-  myTurnState: {
-    borderColor: '#3b82f6',
-    borderWidth: '3px',
-  },
-  lockBadge: {
+  lockIcon: {
     position: 'absolute',
-    top: '4px',
-    right: '4px',
-    fontSize: '0.75rem',
-    backgroundColor: '#f59e0b',
-    borderRadius: '50%',
-    width: '20px',
-    height: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: '5px',
+    right: '5px',
+    fontSize: '1rem',
   },
 };
 
