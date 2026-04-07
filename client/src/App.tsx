@@ -1,69 +1,62 @@
 import React, { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { Player, Tile as TileType } from './types';
 import Lobby from './components/Lobby';
 import Board from './components/Board';
 import Scoreboard from './components/Scoreboard';
-import LiveChart from  './components/LlveChart';
-
-const MAHJONG_SYMBOLS = [
-  '🀄',
-  '🀅',
-  '🀆',
-  '🀀',
-  '🀁',
-  '🀂',
-  '🀃',
-  '🀐',
-  '🀙',
-  '🀇',
-  '🀕',
-  '🀞',
-  '🀌',
-  '🀗',
-  '🀠',
-];
-
-const INITIAL_MOCK_PLAYERS: Player[] = [
-  { id: 'me', name: 'You', score: 120, isConnected: true },
-  { id: 'p2', name: 'Sarah', score: 180, isConnected: true },
-  { id: 'p3', name: 'Mike', score: 80, isConnected: true },
-];
-
-const MOCK_TILES: TileType[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `tile-${i}`,
-  symbol: MAHJONG_SYMBOLS[i % 15],
-  isFlipped: i === 7 || i === 12,
-  isMatched: i < 4,
-  lockedBy: i === 15 ? 'p2' : null,
-}));
+import LiveChart from './components/LlveChart';
+import { useSocket } from './hooks/useSocket';
 
 const App: React.FC = () => {
-  const [userName, setUserName] = useState<string | null>(null);
+  const { gameState, joinGame, selectTile, socket, isConnected } = useSocket();
+  const [hasJoined, setHasJoined] = useState(false);
 
-  if (!userName) {
-    return <Lobby onJoin={setUserName} />;
+  const handleJoin = (name: string) => {
+    joinGame(name);
+    setHasJoined(true);
+  };
+
+  if (!hasJoined) {
+    return <Lobby onJoin={handleJoin} />;
+  }
+
+  if (!gameState) {
+    return (
+      <div style={styles.loadingContainer}>
+        <h2 style={styles.loadingTitle}>Connecting to game...</h2>
+        <p style={styles.loadingText}>
+          {isConnected ? 'Waiting for game state...' : 'Trying to reach server...'}
+        </p>
+      </div>
+    );
   }
 
   return (
     <div style={styles.appContainer}>
       <header style={styles.header}>
         <h1 style={styles.logo}>🀄 MAHJONG COLLAB</h1>
-        <div style={styles.badge}>ROOM: ORIENTAL_DRAGON_88</div>
+        <div style={styles.badge}>
+          {isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+        </div>
       </header>
 
       <main style={styles.mainLayout}>
         <section style={styles.boardSection}>
           <Board
-            tiles={MOCK_TILES}
-            currentPlayerId="me"
-            onSelectTile={(id) => console.log(id)}
+            tiles={gameState.tiles}
+            currentPlayerId={socket?.id ?? ''}
+            onSelectTile={selectTile}
           />
         </section>
 
         <aside style={styles.sidebar}>
-          <Scoreboard players={INITIAL_MOCK_PLAYERS} currentPlayerId="me" />
-          <LiveChart players={INITIAL_MOCK_PLAYERS} scoreHistory={[]} />
+          <Scoreboard
+            players={gameState.players}
+            currentPlayerId={socket?.id ?? ''}
+          />
+          <LiveChart
+            players={gameState.players}
+            scoreHistory={gameState.scoreHistory}
+          />
         </aside>
       </main>
     </div>
@@ -118,6 +111,27 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
+  },
+  loadingContainer: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#062c1e',
+    backgroundImage: 'radial-gradient(circle, #0a3d2b 0%, #062c1e 100%)',
+    color: '#f8fafc',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  },
+  loadingTitle: {
+    margin: 0,
+    fontSize: '2rem',
+    color: '#b4975a',
+  },
+  loadingText: {
+    marginTop: '0.75rem',
+    color: '#d1d5db',
+    fontSize: '1rem',
   },
 };
 
