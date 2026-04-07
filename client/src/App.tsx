@@ -1,121 +1,175 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from 'react';
+import type { CSSProperties } from 'react';
+import type { GameState, Player, Tile as TileType } from './types';
+import Lobby from './components/Lobby';
+import Board from './components/Board';
+import Scoreboard from './components/Scoreboard';
+import LiveChart from './components/LlveChart';
+const INITIAL_MOCK_PLAYERS: Player[] = [
+  { id: 'me', name: 'You', score: 12, isConnected: true },
+  { id: 'p2', name: 'Sarah', score: 18, isConnected: true },
+  { id: 'p3', name: 'Mike', score: 8, isConnected: true },
+  { id: 'p4', name: 'D-Bot', score: 4, isConnected: false },
+];
 
-function App() {
-  const [count, setCount] = useState(0)
+const SYMBOLS = [
+  '🍎',
+  '🍌',
+  '🍇',
+  '🍉',
+  '🍓',
+  '🍒',
+  '🍍',
+  '🥝',
+  '🥭',
+  '🥥',
+  '🥑',
+  '🥦',
+  '🥕',
+  '🌽',
+  '🍄',
+];
+
+const MOCK_TILES: TileType[] = Array.from({ length: 30 }, (_, i) => ({
+  id: `tile-${i}`,
+  symbol: SYMBOLS[i % 15],
+  isFlipped: i === 7 || i === 12,
+  isMatched: i < 4,
+  lockedBy: i === 15 ? 'p2' : null,
+}));
+
+const MOCK_HISTORY = [
+  { timestamp: Date.now() - 120000, scores: { me: 0, p2: 0, p3: 0, p4: 0 } },
+  { timestamp: Date.now() - 90000, scores: { me: 4, p2: 6, p3: 2, p4: 0 } },
+  { timestamp: Date.now() - 60000, scores: { me: 8, p2: 12, p3: 4, p4: 2 } },
+  { timestamp: Date.now() - 30000, scores: { me: 12, p2: 18, p3: 8, p4: 4 } },
+];
+
+const GAME_START_TIME = Date.now();
+
+const App: React.FC = () => {
+  const [userName, setUserName] = useState<string | null>(null);
+
+  const [gameState] = useState<GameState>({
+    tiles: MOCK_TILES,
+    players: INITIAL_MOCK_PLAYERS,
+    scoreHistory: MOCK_HISTORY,
+    isGameOver: false,
+    startTime: GAME_START_TIME,
+  });
+
+  const handleJoin = (name: string) => {
+    setUserName(name);
+  };
+
+  const handleSelectTile = (tileId: string) => {
+    console.log(`Player ${userName} selected tile: ${tileId}`);
+  };
+
+  if (!userName) {
+    return <Lobby onJoin={handleJoin} />;
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={styles.appContainer}>
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <h1 style={styles.logo}>Mahjong Memory</h1>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          <div style={styles.gameMeta}>
+            <span style={styles.badge}>Session: #8821</span>
+            <span style={styles.badge}>Status: In Progress</span>
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+      <main style={styles.mainLayout}>
+        <section style={styles.boardSection}>
+          <Board
+            tiles={gameState.tiles}
+            currentPlayerId="me"
+            onSelectTile={handleSelectTile}
+          />
+        </section>
 
-export default App
+        <aside style={styles.sidebar}>
+          <Scoreboard
+            players={gameState.players}
+            currentPlayerId="me"
+          />
+
+          <LiveChart
+            players={gameState.players}
+            scoreHistory={gameState.scoreHistory}
+          />
+        </aside>
+      </main>
+    </div>
+  );
+};
+
+const styles: Record<string, CSSProperties> = {
+  appContainer: {
+    minHeight: '100vh',
+    backgroundColor: '#0f172a',
+    color: '#f8fafc',
+    fontFamily: "'Inter', sans-serif",
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  header: {
+    backgroundColor: '#1e293b',
+    borderBottom: '1px solid #334155',
+    padding: '1rem 2rem',
+  },
+  headerContent: {
+    maxWidth: '1400px',
+    margin: '0 auto',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  logo: {
+    fontSize: '1.5rem',
+    fontWeight: 800,
+    margin: 0,
+    background: 'linear-gradient(to right, #3b82f6, #10b981)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+  },
+  gameMeta: {
+    display: 'flex',
+    gap: '1rem',
+  },
+  badge: {
+    backgroundColor: '#334155',
+    padding: '4px 12px',
+    borderRadius: '999px',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    color: '#94a3b8',
+  },
+  mainLayout: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 380px',
+    gap: '2rem',
+    padding: '2rem',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box',
+    flex: 1,
+  },
+  boardSection: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  sidebar: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+  },
+};
+
+export default App;
